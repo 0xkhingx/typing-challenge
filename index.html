@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Typing Challenge</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#c9d1d9;--dim:#484f58;
+  --accent:#58a6ff;--correct:#3fb950;--incorrect:#f85149;--warn:#d29922;
+  --font:'Cascadia Code','Fira Code','Consolas','Courier New',monospace;
+}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--font);
+  display:flex;justify-content:center;align-items:center;
+  overflow:hidden;user-select:none;-webkit-user-select:none;
+}
+.hidden{display:none!important}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px}
+
+#home h1{font-size:2.5rem;letter-spacing:-1px;margin-bottom:4px}
+#home p.sub{color:var(--dim);margin-bottom:16px;font-size:.95rem}
+.modes{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.mode-btn{
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+  padding:14px 28px;font-size:1rem;font-family:var(--font);cursor:pointer;
+  border-radius:8px;transition:all .15s;min-width:120px;text-align:center;
+}
+.mode-btn:hover{background:var(--border);border-color:var(--accent)}
+.mode-btn.primary{border-color:var(--accent);background:#0a2647}
+.mode-btn.primary:hover{background:#0d3a6b}
+
+#game-screen{padding:10px}
+#game-header{
+  display:flex;width:100%;max-width:900px;
+  justify-content:space-between;align-items:center;
+  padding:8px 0;gap:12px;flex-wrap:wrap;
+}
+.stat{font-size:1rem;display:flex;gap:4px;align-items:baseline}
+.stat .label{color:var(--dim);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px}
+.stat .value{font-weight:700;font-size:1.2rem;min-width:30px;text-align:right}
+.stat.subtle .value{font-size:.95rem;color:var(--warn)}
+#timer-value{color:var(--accent);font-size:1.4rem;font-weight:700;min-width:50px;text-align:center}
+#timer-value.warn{color:var(--warn)}
+#timer-value.critical{color:var(--incorrect)}
+
+#game-canvas{
+  width:100%;max-width:900px;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;display:block;cursor:text;outline:none;
+}
+#progress-container{
+  width:100%;max-width:900px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;
+}
+#progress-bar{height:100%;background:var(--correct);width:0%;transition:width .15s ease-out;border-radius:2px}
+
+#input-area{
+  width:100%;max-width:900px;display:flex;gap:8px;align-items:center;
+  padding:8px 12px;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;font-family:var(--font);font-size:1.1rem;min-height:42px;
+}
+#input-area .prompt{color:var(--dim)}
+#input-area .typed-char.correct{color:var(--correct)}
+#input-area .typed-char.incorrect{color:var(--incorrect)}
+#input-area .cursor-char{animation:blink .8s step-end infinite;color:var(--accent)}
+@keyframes blink{50%{opacity:0}}
+
+#results{text-align:center}
+#results h2{font-size:1.8rem;margin-bottom:16px}
+.result-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:520px;width:100%;
+}
+.result-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
+.result-item .rlabel{color:var(--dim);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px}
+.result-item .rvalue{font-size:1.5rem;font-weight:700;margin-top:4px}
+.result-item .rvalue.green{color:var(--correct)}
+.result-item .rvalue.red{color:var(--incorrect)}
+.result-item .rvalue.gold{color:var(--warn)}
+
+.sparkline-wrap{margin:8px 0;max-width:520px;width:100%}
+.sparkline-wrap .slabel{color:var(--dim);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+#sparkline{width:100%;height:48px;background:var(--surface);border:1px solid var(--border);border-radius:6px;display:block}
+
+.result-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.result-actions button{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 24px;font-size:.9rem;font-family:var(--font);cursor:pointer;border-radius:6px;transition:all .15s}
+.result-actions button:hover{background:var(--border)}
+.result-actions button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.result-actions button.primary:hover{filter:brightness(1.2)}
+
+#leaderboard{width:100%;max-width:700px}
+#leaderboard h2{text-align:center;font-size:1.8rem;margin-bottom:16px}
+.lb-controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
+.lb-controls button{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 16px;font-size:.8rem;font-family:var(--font);cursor:pointer;border-radius:4px;transition:all .15s}
+.lb-controls button:hover{background:var(--border)}
+.lb-controls button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.lb-table{width:100%;border-collapse:collapse}
+.lb-table th{text-align:left;color:var(--dim);font-size:.7rem;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border)}
+.lb-table td{padding:8px 12px;border-bottom:1px solid var(--border);font-size:.9rem}
+.lb-table tr:hover td{background:var(--surface)}
+.empty-state{text-align:center;color:var(--dim);padding:40px;font-size:1rem}
+.clear-btn{background:transparent;border:1px solid var(--incorrect);color:var(--incorrect);padding:6px 16px;font-size:.8rem;font-family:var(--font);cursor:pointer;border-radius:4px;margin-top:12px}
+.clear-btn:hover{background:var(--incorrect);color:#fff}
+
+#combo-display{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  pointer-events:none;font-size:2.5rem;font-weight:700;opacity:0;
+  text-shadow:0 0 30px rgba(88,166,255,.5);z-index:100;
+}
+.daily-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--warn);color:#000;padding:2px 12px;
+  border-radius:12px;font-size:.75rem;font-weight:600;
+}
+
+@media(max-width:600px){
+  #home h1{font-size:1.8rem}
+  .mode-btn{padding:10px 16px;min-width:80px;font-size:.85rem}
+  .stat .value{font-size:1rem}
+  .stat.subtle .value{font-size:.85rem}
+  #timer-value{font-size:1.2rem}
+  .result-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="home" class="screen">
+  <h1>⌨ Typing Challenge</h1>
+  <p class="sub">Test your speed &amp; accuracy</p>
+  <div class="modes">
+    <button class="mode-btn" data-mode="15">15s</button>
+    <button class="mode-btn" data-mode="30">30s</button>
+    <button class="mode-btn" data-mode="60">60s</button>
+    <button class="mode-btn" data-mode="words50">Words 50</button>
+    <button class="mode-btn" data-mode="zen">Zen</button>
+    <button class="mode-btn primary" data-mode="daily">Daily Challenge</button>
+  </div>
+  <button class="mode-btn" id="view-lb" style="margin-top:8px">Leaderboard</button>
+</div>
+
+<div id="game-screen" class="screen hidden">
+  <div id="game-header">
+    <div><div class="stat"><span class="label">WPM</span><span class="value" id="wpm-value">0</span></div><div class="stat subtle"><span class="label">RAW</span><span class="value" id="raw-value">0</span></div></div>
+    <div class="stat"><span class="label">ACC</span><span class="value" id="acc-value">100</span><span class="label">%</span></div>
+    <div id="timer-value">—</div>
+    <div id="mode-label"><span class="label" id="mode-text">30s</span></div>
+  </div>
+  <canvas id="game-canvas" tabindex="0"></canvas>
+  <div id="progress-container"><div id="progress-bar"></div></div>
+  <div id="input-area">
+    <span class="prompt">&gt;&nbsp;</span>
+    <span id="cursor-line"></span>
+  </div>
+</div>
+
+<div id="combo-display"></div>
+
+<div id="results" class="screen hidden">
+  <h2 id="result-title">Run Complete</h2>
+  <div class="result-grid">
+    <div class="result-item"><div class="rlabel">WPM</div><div class="rvalue green" id="r-wpm">0</div></div>
+    <div class="result-item"><div class="rlabel">RAW</div><div class="rvalue gold" id="r-raw">0</div></div>
+    <div class="result-item"><div class="rlabel">Accuracy</div><div class="rvalue green" id="r-acc">0%</div></div>
+    <div class="result-item"><div class="rlabel">Time</div><div class="rvalue" id="r-time">0s</div></div>
+    <div class="result-item"><div class="rlabel">Correct</div><div class="rvalue green" id="r-correct">0</div></div>
+    <div class="result-item"><div class="rlabel">Errors</div><div class="rvalue red" id="r-errors">0</div></div>
+  </div>
+  <div class="sparkline-wrap"><div class="slabel">WPM over time</div><canvas id="sparkline"></canvas></div>
+  <div class="result-actions">
+    <button id="retry-btn">Retry</button>
+    <button id="home-btn">Home</button>
+    <button id="lb-btn" class="primary">Leaderboard</button>
+  </div>
+</div>
+
+<div id="leaderboard" class="screen hidden">
+  <h2>Leaderboard</h2>
+  <div class="lb-controls">
+    <button class="active" data-sort="wpm">WPM</button>
+    <button data-sort="acc">Accuracy</button>
+    <button data-sort="date">Recent</button>
+    <button id="lb-back">← Back</button>
+  </div>
+  <table class="lb-table">
+    <thead><tr><th>#</th><th>WPM</th><th>Acc</th><th>Mode</th><th>Date</th></tr></thead>
+    <tbody id="lb-body"></tbody>
+  </table>
+  <div class="empty-state hidden" id="lb-empty">No runs yet. Start typing!</div>
+  <button class="clear-btn hidden" id="clear-lb">Clear All History</button>
+</div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  WORD LIST
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const WORD_LIST = [
+  'the','be','to','of','and','a','in','that','have','it','for','not','on','with','he',
+  'as','you','do','at','this','but','his','by','from','they','we','say','her','she','or',
+  'an','will','my','one','all','would','there','their','what','so','up','out','if','about',
+  'who','get','which','go','me','when','make','can','like','time','no','just','him','know',
+  'take','people','into','year','your','good','some','could','them','see','other','than',
+  'then','now','look','only','come','its','over','think','also','back','after','use','two',
+  'how','our','work','first','well','way','even','new','want','because','any','these','give',
+  'day','most','us','great','between','need','large','often','hand','high','place','small',
+  'under','long','right','still','house','world','last','school','never','city','tree','cross',
+  'farm','hard','start','might','story','saw','something','next','often','above','paper',
+  'group','old','left','big','walk','side','far','water','run','important','few','while',
+  'along','close','seem','hard','example','begin','life','always','those','both','together',
+  'got','until','children','side','feet','car','mile','night','white','sea','began','grow',
+  'took','river','four','carry','state','once','book','hear','stop','without','second','later',
+  'miss','idea','enough','eat','face','watch','far','real','almost','let','above','girl',
+  'mountain','cut','young','talk','soon','list','song','being','leave','family','body','color',
+  'music','stand','sun','question','fish','area','mark','dog','horse','birds','problem',
+  'room','knew','since','ever','piece','told','usually','friends','easy','order','red',
+  'door','sure','become','top','ship','across','today','during','short','better','best',
+  'low','hours','black','happened','whole','measure','result','morning','reason','search',
+  'office','design','choose','cause','clear','bring','power','ground','game','letter','learn',
+  'change','study','science','table','action','practice','report','computer','language','early',
+  'minute','plane','quick','simple','several','human','center','final','force','class','number',
+  'system','common','public','nature','period','figure','value','build','prove','process','term',
+  'return','point','level','control','field','move','space','earth','plant','food','sense',
+  'mind','brain','memory','heart','blood','music','market','company','price','service','industry',
+  'energy','product','business','decision','information','research','development','education',
+  'community','society','economy','environment','population','production','communication',
+  'government','organization','relationship','technology','following','despite','however',
+  'although','therefore','meanwhile','nevertheless','furthermore','according','available',
+  'significant','particular','necessary','relatively','traditional','quickly','quietly','simply',
+  'carefully','suddenly','immediately','completely','absolutely','beauty','strength','wisdom',
+  'courage','honor','wealth','health','growth','faith','peace','truth','dream','light','hope',
+  'grace','joy','love','spirit','skill','speed','force','depth','width','height','length',
+  'weight','shape','sound','sight','taste','touch','smell','jump','climb','slide','ride',
+  'drive','throw','catch','break','build','create','destroy','fix','enter','leave','stay',
+  'begin','finish','start','stop','pause','continue','arrive','depart','follow','lead','guide',
+  'learn','teach','study','read','write','draw','paint','sing','dance','play','work','rest',
+  'sleep','wake','eat','drink','cook','bake','clean','wash','brush','talk','speak','tell',
+  'ask','answer','call','shout','whisper','laugh','smile','think','know','believe','doubt',
+  'remember','forget','hope','wish','want','need','like','enjoy','suffer','struggle','fight',
+  'win','lose','try','fail','succeed','accept','refuse','allow','forbid','help','support',
+  'praise','blame','thank','forgive','understand','appreciate','admire','respect','trust',
+  'obey','observe','notice','ignore','avoid','seek','hide','show','reveal','cover','protect',
+  'attack','defend','capture','release','save','spend','waste','earn','gain','keep','hold',
+  'drop','gather','collect','sort','arrange','organize','plan','prepare','practice','perform',
+  'achieve','attempt','complete','polish','perfect','improve','develop','grow','expand','reduce',
+  'increase','count','measure','weigh','balance','compare','contrast','distinguish','identify',
+  'classify','analyze','examine','explore','investigate','experiment','discover','invent',
+  'design','construct','produce','manufacture','process','refine','transform','convert','adapt',
+  'adjust','modify','change','replace','remove','insert','attach','connect','combine','merge',
+  'unite','separate','divide','split','abstract','concrete','specific','general','complex',
+  'difficult','bright','dark','light','heavy','thick','thin','wide','narrow','deep','shallow',
+  'sharp','smooth','rough','swift','brisk','prompt','rapid','hasty','urgent','pressing',
+  'critical','vital','essential','random','unique','unusual','rare','common','ordinary',
+  'typical','normal','regular','standard','diverse','various','multiple','several','different'
+];
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  SEEDED PRNG
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function mulberry32(seed) {
+  let s = seed | 0;
+  return function() { s |= 0; s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function shuffleArray(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  } return arr;
+}
+function dailySeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+function generateWords(mode, seed) {
+  const rng = seed != null ? mulberry32(seed) : Math.random;
+  const pool = shuffleArray([...WORD_LIST], rng);
+  const count = mode === 'daily' || mode === 'words50' ? 50
+    : mode === 'zen' ? 100
+    : Math.max(50, Math.ceil((parseInt(mode) / 60) * 200));
+  return pool.slice(0, count);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  INDEXEDDB
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('TypingChallenge', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('runs')) {
+        const s = db.createObjectStore('runs', { keyPath: 'id', autoIncrement: true });
+        s.createIndex('mode','mode'); s.createIndex('wpm','wpm');
+        s.createIndex('date','date'); s.createIndex('dailySeed','dailySeed');
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function saveRun(run) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('runs','readwrite');
+    const req = tx.objectStore('runs').add({
+      wpm: Math.round(run.wpm), raw: Math.round(run.raw || 0), accuracy: Math.round(run.accuracy),
+      mode: run.mode, duration: run.duration,
+      correct: run.correct, errors: run.errors, total: run.total,
+      date: Date.now(), dailySeed: run.dailySeed || null
+    });
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function getAllRuns() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('runs','readonly');
+    const req = tx.objectStore('runs').getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function clearRuns() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('runs','readwrite');
+    const req = tx.objectStore('runs').clear();
+    req.onsuccess = () => resolve(); req.onerror = () => reject(req.error);
+  });
+}
+async function getDailyRun(seed) {
+  const all = await getAllRuns();
+  return all.find(r => r.dailySeed === seed) || null;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  WEB AUDIO  (synthesized click sounds)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playClick(correct) {
+  try {
+    ensureAudio();
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.frequency.value = correct ? 880 : 220;
+    osc.type = correct ? 'sine' : 'sawtooth';
+    const dur = correct ? 0.04 : 0.08;
+    gain.gain.setValueAtTime(0.07, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.start(t); osc.stop(t + dur);
+  } catch(_) {}
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  GAME STATE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class GameState {
+  constructor(words, mode) {
+    this.words = words;
+    this.mode = mode;
+    this.duration = mode === 'zen' ? 0 : parseInt(mode) || 0;
+    this.wordIndex = 0;
+    this.charIndex = 0;
+    this.results = words.map(() => []);
+    this.startTime = 0;
+    this.endTime = 0;
+    this.isFinished = false;
+    this.isDaily = mode === 'daily';
+    this.dailySeed = this.isDaily ? dailySeed() : null;
+    this.elapsed = 0;
+    this.consecutiveCorrectWords = 0;
+  }
+  get currentWord() { return this.wordIndex < this.words.length ? this.words[this.wordIndex] : null; }
+  get isTimed() { return ['15','30','60'].includes(this.mode); }
+  get isWordMode() { return this.mode === 'words50' || this.mode === 'zen'; }
+  get isZen() { return this.mode === 'zen'; }
+
+  typeChar(char) {
+    if (this.isFinished || !this.currentWord) return { correct: false, wordCompleted: false };
+    this.startTime = this.startTime || performance.now();
+    const expected = this.currentWord[this.charIndex];
+    const correct = char === expected;
+    this.results[this.wordIndex][this.charIndex] = correct ? 'correct' : 'incorrect';
+    this.charIndex++;
+    let wordCompleted = false;
+    if (this.charIndex >= this.currentWord.length) {
+      wordCompleted = true;
+      const wordAllCorrect = this.results[this.wordIndex].every(r => r === 'correct');
+      if (wordAllCorrect) this.consecutiveCorrectWords++;
+      else this.consecutiveCorrectWords = 0;
+      this.wordIndex++;
+      this.charIndex = 0;
+      if (this.wordIndex >= this.words.length) { this.isFinished = true; this.endTime = performance.now(); }
+    }
+    return { correct, wordCompleted, wordAllCorrect: wordCompleted && this.results[this.wordIndex - 1].every(r => r === 'correct') };
+  }
+
+  backspace() {
+    if (this.isFinished) return;
+    if (this.charIndex > 0) { this.charIndex--; this.results[this.wordIndex][this.charIndex] = null; }
+    else if (this.wordIndex > 0) {
+      this.wordIndex--; this.charIndex = this.words[this.wordIndex].length - 1;
+      this.results[this.wordIndex][this.charIndex] = null;
+    }
+  }
+
+  getStats() {
+    let correct = 0, total = 0;
+    for (const wr of this.results) { for (const r of wr) { if (r) total++; if (r === 'correct') correct++; } }
+    const end = this.isFinished ? this.endTime : performance.now();
+    const elapsed = this.startTime ? (end - this.startTime) / 1000 : 0;
+    const minutes = elapsed / 60;
+    const wpm = minutes > 0 ? (correct / 5) / minutes : 0;
+    const raw = minutes > 0 ? (total / 5) / minutes : 0;
+    const accuracy = total > 0 ? (correct / total) * 100 : 100;
+    return { correct, errors: total - correct, total, elapsed, wpm, raw, accuracy };
+  }
+
+  tick(dt) {
+    if (!this.startTime || this.isFinished) return false;
+    this.elapsed += dt;
+    if (this.isTimed && this.elapsed >= this.duration) { this.isFinished = true; this.endTime = performance.now(); return true; }
+    return false;
+  }
+
+  get timeLeft() {
+    if (!this.startTime) return this.isTimed ? this.duration : 0;
+    return this.isTimed ? Math.max(0, this.duration - this.elapsed) : 0;
+  }
+  get progress() {
+    if (this.isWordMode || this.isDaily || this.isZen) return this.wordIndex / this.words.length;
+    return this.isTimed && this.duration > 0 ? Math.min(1, this.elapsed / this.duration) : 0;
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  CANVAS RENDERER  (with auto-scroll)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const COLORS = { correct:'#3fb950', incorrect:'#f85149', dim:'#484f58', accent:'#58a6ff',
+  text:'#c9d1d9', surface:'#161b22', white:'#ffffff' };
+
+class Renderer {
+  constructor(canvas) {
+    this.canvas = canvas; this.ctx = canvas.getContext('2d');
+    this.fontSize = 22; this.lineH = 42; this.padX = 24; this.padY = 18;
+    this.charW = 0; this.displayW = 800; this.dpr = window.devicePixelRatio || 1;
+    this.resize(); window.addEventListener('resize', () => this.resize());
+  }
+  resize() {
+    const p = this.canvas.parentElement;
+    this.displayW = Math.min(p.clientWidth - 2, 900);
+    this.canvas.style.width = this.displayW + 'px';
+  }
+  measureChar() {
+    this.ctx.font = `500 ${this.fontSize}px Consolas,"Courier New",monospace`;
+    this.charW = this.ctx.measureText('m').width;
+  }
+  layout(words) {
+    this.measureChar();
+    const maxC = Math.max(1, Math.floor((this.displayW - this.padX * 2) / this.charW));
+    const rows = [], wordToRow = [];
+    let cur = [], len = 0;
+    for (const w of words) {
+      const sep = cur.length ? 1 : 0;
+      if (len + sep + w.length > maxC && cur.length) {
+        rows.push(cur); cur = [w]; len = w.length;
+      } else { if (sep) len++; cur.push(w); len += w.length; }
+      wordToRow.push(rows.length); // word belongs to the row being built (rows.length is the *next* row index)
+    }
+    // fix wordToRow: words that were added to cur are in row "rows.length" (next row)
+    // Actually, if a word is added to cur and later rows.push(cur), the word was in the row at index rows.length-1
+    // Let's recompute properly:
+    // Reset and recompute
+    // Simpler: rebuild wordToRow after rows are finalized
+    const wtr = [];
+    for (let ri = 0; ri < rows.length; ri++) {
+      for (let wi = 0; wi < rows[ri].length; wi++) {
+        wtr.push(ri);
+      }
+    }
+    return { rows, wordToRow: wtr };
+  }
+
+  render(state, anims) {
+    const ctx = this.ctx, dpr = this.dpr;
+    this.resize();
+    const w = Math.max(100, this.displayW);
+
+    if (state.isZen) {
+      // ── Zen mode: one word at a time, centered ──
+      const zenFont = 48;
+      const viewH = 200;
+      this.canvas.width = w * dpr; this.canvas.height = viewH * dpr;
+      this.canvas.style.height = viewH + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, viewH);
+      ctx.fillStyle = COLORS.surface; ctx.fillRect(0, 0, w, viewH);
+      ctx.font = `500 ${zenFont}px Consolas,"Courier New",monospace`;
+      ctx.textBaseline = 'middle';
+
+      const chW = ctx.measureText('m').width;
+      const curWord = state.currentWord || '';
+      const prevWords = state.wordIndex > 0 ? state.words[state.wordIndex - 1] : '';
+      const nextWord = state.wordIndex + 1 < state.words.length ? state.words[state.wordIndex + 1] : '';
+
+      // next word ghost (dimmed, small, below)
+      if (nextWord) {
+        ctx.font = `400 20px Consolas,"Courier New",monospace`;
+        ctx.fillStyle = 'rgba(72,79,88,0.3)';
+        ctx.textAlign = 'center';
+        ctx.fillText(nextWord, w / 2, viewH / 2 + zenFont + 16);
+        ctx.textAlign = 'start';
+      }
+
+      // current word with character coloring
+      ctx.font = `500 ${zenFont}px Consolas,"Courier New",monospace`;
+      ctx.textBaseline = 'middle';
+      const results = state.results[state.wordIndex] || [];
+      const totalW = curWord.length * chW;
+      let sx = (w - totalW) / 2;
+
+      for (let ci = 0; ci < curWord.length; ci++) {
+        const r = results[ci];
+        let color;
+        if (r === 'correct') color = COLORS.correct;
+        else if (r === 'incorrect') color = COLORS.incorrect;
+        else if (ci === state.charIndex) color = COLORS.white;
+        else color = COLORS.dim;
+        ctx.fillStyle = color;
+        ctx.fillText(curWord[ci], sx, viewH / 2 - 4);
+        sx += chW;
+      }
+
+      // flash overlay on whole word
+      if (anims && anims.flashes && anims.flashes.length) {
+        const f = anims.flashes[anims.flashes.length - 1];
+        const a = 1 - f.progress;
+        ctx.fillStyle = f.correct ? `rgba(63,185,80,${0.12*a})` : `rgba(248,81,73,${0.12*a})`;
+        const fw = curWord.length * chW;
+        ctx.fillRect((w - fw) / 2 - 4, viewH/2 - zenFont/2 - 4, fw + 8, zenFont + 8);
+      }
+      return;
+    }
+
+    // ── Normal mode: multi-row word layout ──
+    const { rows, wordToRow } = this.layout(state.words);
+    const totalH = rows.length * this.lineH + this.padY * 2;
+    const viewH = Math.min(totalH, 340);
+
+    this.canvas.width = w * dpr; this.canvas.height = viewH * dpr;
+    this.canvas.style.height = viewH + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, viewH);
+    ctx.fillStyle = COLORS.surface; ctx.fillRect(0, 0, w, viewH);
+
+    const curRow = state.wordIndex < wordToRow.length ? wordToRow[state.wordIndex] : 0;
+    const targetY = curRow * this.lineH + this.lineH / 2;
+    const scrollY = totalH > viewH ? Math.max(0, Math.min(targetY - viewH / 2, totalH - viewH)) : 0;
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, w, viewH); ctx.clip();
+    ctx.translate(0, -scrollY);
+    ctx.font = `500 ${this.fontSize}px Consolas,"Courier New",monospace`;
+    ctx.textBaseline = 'top';
+    this.measureChar();
+
+    const flashMap = {};
+    if (anims && anims.flashes) for (const f of anims.flashes) flashMap[f.wordIdx] = f;
+
+    let gwi = 0, ty = this.padY;
+    for (const row of rows) {
+      let tx = this.padX;
+      for (let wi = 0; wi < row.length; wi++) {
+        const word = row[wi];
+        const isCur = gwi === state.wordIndex;
+        const isPast = gwi < state.wordIndex;
+        if (wi > 0) tx += this.charW;
+
+        const wordX = tx, wordY = ty, wordW = word.length * this.charW;
+
+        if (isCur) { ctx.fillStyle = 'rgba(88,166,255,0.07)'; ctx.fillRect(wordX-3, wordY-2, wordW+6, this.fontSize+4); }
+        if (flashMap[gwi]) {
+          const f = flashMap[gwi]; const a = 1 - f.progress;
+          ctx.fillStyle = f.correct ? `rgba(63,185,80,${0.15*a})` : `rgba(248,81,73,${0.15*a})`;
+          ctx.fillRect(wordX-3, wordY-2, wordW+6, this.fontSize+4);
+        }
+
+        for (let ci = 0; ci < word.length; ci++) {
+          const ch = word[ci]; let color;
+          if (isPast) { const r = state.results[gwi]?.[ci]; color = r === 'correct' ? COLORS.correct : r === 'incorrect' ? COLORS.incorrect : COLORS.dim; }
+          else if (isCur) { const r = state.results[gwi]?.[ci]; color = r === 'correct' ? COLORS.correct : r === 'incorrect' ? COLORS.incorrect : ci === state.charIndex ? COLORS.white : COLORS.dim; }
+          else color = COLORS.dim;
+          ctx.fillStyle = color; ctx.fillText(ch, tx, ty); tx += this.charW;
+        }
+        gwi++;
+      }
+      ty += this.lineH;
+    }
+    ctx.restore();
+
+    if (totalH > viewH) {
+      const dots = 5; const dotR = 3; const gap = 8; const dh = dots * (dotR*2 + gap);
+      const sx = w - 16, sy = (viewH - dh) / 2;
+      const visStart = scrollY / totalH; const visEnd = (scrollY + viewH) / totalH;
+      for (let i = 0; i < dots; i++) {
+        const t = i / (dots - 1);
+        const active = t >= visStart && t <= visEnd;
+        ctx.fillStyle = active ? COLORS.dim : COLORS.surface;
+        ctx.beginPath(); ctx.arc(sx, sy + i*(dotR*2+gap), dotR, 0, Math.PI*2); ctx.fill();
+      }
+    }
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  GAME CONTROLLER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const renderer = new Renderer(document.getElementById('game-canvas'));
+let gameState = null;
+let anims = { flashes: [], comboCount: 0, comboElapsed: 0 };
+let rafId = null, lastFrameTime = 0, pendingEnd = false;
+let wpmSamples = [];
+let sampleTimer = 0;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+async function startGame(mode) {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  pendingEnd = false; wpmSamples = []; sampleTimer = 0;
+
+  if (mode === 'daily') {
+    const seed = dailySeed();
+    const existing = await getDailyRun(seed);
+    if (existing) { showDailyResult(existing); return; }
+    gameState = new GameState(generateWords('daily', seed), 'daily');
+  } else {
+    gameState = new GameState(generateWords(mode, null), mode);
+  }
+
+  anims = { flashes: [], comboCount: 0, comboElapsed: 0 };
+  lastFrameTime = 0;
+
+  document.getElementById('wpm-value').textContent = '0';
+  document.getElementById('raw-value').textContent = '0';
+  document.getElementById('acc-value').textContent = '100';
+  document.getElementById('timer-value').textContent = gameState.isTimed ? String(gameState.duration) : gameState.isZen ? '∞' : '—';
+  document.getElementById('timer-value').className = '';
+
+  if (mode === 'daily') {
+    const d = new Date();
+    document.getElementById('mode-label').innerHTML = `<span class="daily-badge">Daily ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>`;
+  } else {
+    const label = mode === 'words50' ? 'Words 50' : mode === 'zen' ? 'Zen' : mode + 's';
+    document.getElementById('mode-label').innerHTML = `<span class="label">${label}</span>`;
+  }
+
+  document.getElementById('cursor-line').innerHTML = '';
+  document.getElementById('progress-bar').style.width = '0%';
+  renderer.render(gameState, anims);
+  showScreen('game-screen');
+  document.getElementById('game-canvas').focus();
+  lastFrameTime = performance.now();
+  loop(lastFrameTime);
+}
+
+function loop(ts) {
+  if (!gameState) return;
+  const dt = Math.min(lastFrameTime ? (ts - lastFrameTime) / 1000 : 0, 0.1);
+  lastFrameTime = ts;
+
+  if (gameState.startTime && !gameState.isFinished) {
+    if (gameState.tick(dt)) { endGame(); return; }
+    updateDisplay();
+  }
+
+  // sample WPM every ~500ms for sparkline
+  if (gameState.startTime && !gameState.isFinished) {
+    sampleTimer += dt;
+    if (sampleTimer >= 0.5) {
+      sampleTimer = 0;
+      const s = gameState.getStats();
+      wpmSamples.push({ t: s.elapsed, wpm: s.wpm });
+    }
+  }
+
+  updateAnimations(dt);
+  renderer.render(gameState, anims);
+
+  if (pendingEnd) { pendingEnd = false; endGame(); return; }
+  rafId = requestAnimationFrame(loop);
+}
+
+function updateDisplay() {
+  const s = gameState.getStats();
+  document.getElementById('wpm-value').textContent = Math.round(s.wpm);
+  document.getElementById('raw-value').textContent = Math.round(s.raw);
+  document.getElementById('acc-value').textContent = Math.round(s.accuracy);
+  const tl = gameState.timeLeft; const te = document.getElementById('timer-value');
+  if (gameState.isTimed) {
+    te.textContent = Math.ceil(tl) + 's';
+    te.className = tl <= 3 ? 'critical' : tl <= 7 ? 'warn' : '';
+  }
+  document.getElementById('progress-bar').style.width = Math.min(100, gameState.progress * 100) + '%';
+}
+
+function triggerFlash(wordIdx, correct) {
+  anims.flashes.push({ wordIdx, correct, progress: 0 });
+  if (anims.flashes.length > 10) anims.flashes.shift();
+}
+
+function triggerCombo(count) {
+  const el = document.getElementById('combo-display');
+  el.textContent = (count >= 10 ? '🔥 ' : count >= 5 ? '⚡ ' : '✓ ') + count;
+  el.style.color = count >= 10 ? COLORS.incorrect : count >= 5 ? COLORS.accent : COLORS.correct;
+  anims.comboCount = count; anims.comboElapsed = 0.8;
+  el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.4)';
+}
+
+function updateAnimations(dt) {
+  anims.flashes = anims.flashes.filter(f => { f.progress += dt * 5; return f.progress < 1; });
+  if (anims.comboElapsed > 0) {
+    anims.comboElapsed -= dt;
+    const el = document.getElementById('combo-display');
+    if (anims.comboElapsed <= 0) { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-50%) scale(1)'; anims.comboCount = 0; }
+    else { const p = Math.min(1, anims.comboElapsed/0.8); el.style.opacity = String(p); el.style.transform = `translate(-50%,-50%) scale(${1+(1-p)*0.4})`; }
+  }
+}
+
+function updateCursorLine() {
+  const el = document.getElementById('cursor-line');
+  if (!gameState || !gameState.currentWord) { el.innerHTML = ''; return; }
+  const word = gameState.currentWord; const typed = gameState.results[gameState.wordIndex] || [];
+  const chars = [];
+  for (let i = 0; i < word.length; i++) {
+    const r = typed[i];
+    if (r === 'correct') chars.push(`<span class="typed-char correct">${word[i]}</span>`);
+    else if (r === 'incorrect') chars.push(`<span class="typed-char incorrect">${word[i]}</span>`);
+    else if (i === gameState.charIndex) chars.push(`<span class="cursor-char">▎</span>`);
+    else chars.push(`<span>${word[i]}</span>`);
+  }
+  if (gameState.charIndex >= word.length) chars.push(`<span class="cursor-char"> </span>`);
+  el.innerHTML = chars.join('');
+}
+
+// ── Input ──
+document.addEventListener('keydown', e => {
+  if (document.getElementById('game-screen').classList.contains('hidden')) return;
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    if (gameState && !gameState.isFinished) { gameState.backspace(); updateDisplay(); updateCursorLine(); }
+    return;
+  }
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && e.key !== ' ') {
+    e.preventDefault();
+    if (!gameState || gameState.isFinished) return;
+    const res = gameState.typeChar(e.key);
+    playClick(res.correct);
+    updateDisplay(); updateCursorLine();
+    triggerFlash(gameState.wordIndex > 0 && gameState.charIndex === 0 ? gameState.wordIndex - 1 : gameState.wordIndex, res.correct);
+    if (res.wordCompleted && gameState.consecutiveCorrectWords > 0 && gameState.consecutiveCorrectWords % 5 === 0) triggerCombo(gameState.consecutiveCorrectWords);
+    if (gameState.isFinished) pendingEnd = true;
+  }
+});
+
+// ── Sparkline ──
+function drawSparkline() {
+  const c = document.getElementById('sparkline');
+  const rect = c.parentElement.getBoundingClientRect();
+  const W = Math.min(rect.width, 520);
+  const H = 48;
+  const dpr = window.devicePixelRatio || 1;
+  c.width = W * dpr; c.height = H * dpr;
+  c.style.width = W + 'px'; c.style.height = H + 'px';
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  if (wpmSamples.length < 2) {
+    ctx.fillStyle = COLORS.dim; ctx.font = '12px Consolas,monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Not enough data', W/2, H/2+4);
+    return;
+  }
+
+  const pts = wpmSamples;
+  const maxW = Math.max(...pts.map(p => p.wpm), 1);
+  const PAD = 4;
+  const pw = W - PAD * 2, ph = H - PAD * 2;
+
+  // line
+  ctx.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    const x = PAD + (i / (pts.length - 1)) * pw;
+    const y = PAD + ph - (pts[i].wpm / maxW) * ph;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = COLORS.accent; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // fill
+  ctx.lineTo(PAD + pw, PAD + ph); ctx.lineTo(PAD, PAD + ph); ctx.closePath();
+  const grad = ctx.createLinearGradient(0, PAD, 0, PAD + ph);
+  grad.addColorStop(0, 'rgba(88,166,255,0.15)'); grad.addColorStop(1, 'rgba(88,166,255,0.01)');
+  ctx.fillStyle = grad; ctx.fill();
+
+  // axis label
+  ctx.fillStyle = COLORS.dim; ctx.font = '9px Consolas,monospace'; ctx.textAlign = 'right';
+  ctx.fillText(Math.round(maxW) + 'wpm', W - PAD, PAD + 9);
+}
+
+// ── End Game ──
+function endGame() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  const s = gameState.getStats();
+  document.getElementById('r-wpm').textContent = Math.round(s.wpm);
+  document.getElementById('r-raw').textContent = Math.round(s.raw);
+  document.getElementById('r-acc').textContent = Math.round(s.accuracy) + '%';
+  document.getElementById('r-time').textContent = Math.round(s.elapsed) + 's';
+  document.getElementById('r-correct').textContent = s.correct;
+  document.getElementById('r-errors').textContent = s.errors;
+  document.getElementById('result-title').textContent = gameState.isDaily ? 'Daily Challenge Complete!' : 'Run Complete';
+  showScreen('results');
+  drawSparkline();
+
+  saveRun({
+    wpm: s.wpm, raw: s.raw, accuracy: s.accuracy, mode: gameState.mode,
+    duration: gameState.isTimed ? gameState.duration : s.elapsed,
+    correct: s.correct, errors: s.errors, total: s.total,
+    dailySeed: gameState.dailySeed
+  }).catch(() => {});
+}
+
+function showDailyResult(run) {
+  document.getElementById('r-wpm').textContent = run.wpm;
+  document.getElementById('r-raw').textContent = run.raw || '—';
+  document.getElementById('r-acc').textContent = run.accuracy + '%';
+  document.getElementById('r-time').textContent = Math.round(run.duration) + 's';
+  document.getElementById('r-correct').textContent = run.correct;
+  document.getElementById('r-errors').textContent = run.errors;
+  document.getElementById('result-title').textContent = "Today's Daily Done!";
+  showScreen('results');
+  drawSparkline();
+}
+
+// ── Leaderboard ──
+let lbSort = 'wpm';
+async function refreshLB() {
+  const runs = await getAllRuns();
+  const tbody = document.getElementById('lb-body');
+  const empty = document.getElementById('lb-empty');
+  const clearBtn = document.getElementById('clear-lb');
+  tbody.innerHTML = '';
+  if (!runs.length) { empty.classList.remove('hidden'); clearBtn.classList.add('hidden'); return; }
+  empty.classList.add('hidden'); clearBtn.classList.remove('hidden');
+  const sorted = [...runs].sort((a, b) => {
+    if (lbSort === 'wpm') return b.wpm - a.wpm;
+    if (lbSort === 'acc') return b.accuracy - a.accuracy;
+    return b.date - a.date;
+  });
+  for (let i = 0; i < Math.min(sorted.length, 50); i++) {
+    const r = sorted[i];
+    const d = new Date(r.date);
+    const ds = d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    const ms = r.mode === 'daily' ? 'Daily' : r.mode === 'words50' ? 'Words 50' : r.mode + 's';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${r.wpm}</td><td>${r.accuracy}%</td><td>${ms}</td><td>${ds}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// ── Navigation ──
+document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => btn.addEventListener('click', () => startGame(btn.dataset.mode)));
+document.getElementById('view-lb').addEventListener('click', async () => { showScreen('leaderboard'); await refreshLB(); });
+document.getElementById('lb-back').addEventListener('click', () => showScreen('home'));
+document.querySelectorAll('#leaderboard .lb-controls button[data-sort]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    document.querySelectorAll('#leaderboard .lb-controls button[data-sort]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); lbSort = btn.dataset.sort; await refreshLB();
+  });
+});
+document.getElementById('clear-lb').addEventListener('click', async () => { if (confirm('Clear all run history?')) { await clearRuns(); await refreshLB(); } });
+document.getElementById('retry-btn').addEventListener('click', () => { if (gameState) startGame(gameState.mode); });
+document.getElementById('home-btn').addEventListener('click', () => showScreen('home'));
+document.getElementById('lb-btn').addEventListener('click', async () => { showScreen('leaderboard'); await refreshLB(); });
+
+document.getElementById('game-screen').addEventListener('click', e => {
+  if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'CANVAS') document.getElementById('game-canvas').focus();
+});
+
+showScreen('home');
+</script>
+</body>
+</html>
