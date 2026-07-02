@@ -6,15 +6,14 @@
 <title>Typing Challenge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #FAFAF8; --surface: #F1F0EC; --ink: #2A2926; --ink-muted: #8A8880;
   --accent: #5B7B7A; --correct: #7A9A6E; --error: #B5766A;
   --font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
-  --radius: 10px; --shadow: 0 2px 12px rgba(42,41,38,0.06);
-  --caret-style: block; --caret-color: var(--accent);
+  --radius: 10px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -26,21 +25,39 @@ body{
 .hidden{display:none!important}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:16px}
 
-/* ── Home ── */
+#nav-bar{
+  position:fixed;top:0;left:0;right:0;z-index:50;height:44px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;pointer-events:none;
+}
+#nav-bar > *{pointer-events:all}
+.nav-btn{
+  background:none;border:none;color:var(--ink-muted);font-family:var(--font-ui);
+  font-size:.75rem;font-weight:500;cursor:pointer;padding:4px 8px;
+  border-radius:4px;transition:color .15s;letter-spacing:.3px;
+}
+.nav-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.nav-btn:hover{color:var(--ink)}
+.nav-btn.home-link{font-family:var(--font-mono);font-size:.9rem;letter-spacing:-.5px;color:var(--ink-muted)}
+.nav-btn.home-link:hover{color:var(--ink)}
+
 #home h1{font-family:var(--font-mono);font-size:2.8rem;font-weight:500;letter-spacing:-2px;color:var(--ink)}
 #home .sub{color:var(--ink-muted);font-size:.9rem;margin-bottom:12px;font-weight:400}
-.modes{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.modes{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
+.mode-group{display:flex;gap:6px;align-items:center}
+.mode-group + .mode-group::before{content:'';width:1px;height:20px;background:var(--surface);margin:0 4px}
 .mode-btn{
   background:var(--surface);border:1px solid transparent;color:var(--ink-muted);
-  padding:12px 24px;font-size:.85rem;font-family:var(--font-ui);font-weight:500;
-  cursor:pointer;border-radius:var(--radius);transition:all .2s ease;min-width:100px;text-align:center;
+  padding:10px 18px;font-size:.8rem;font-family:var(--font-ui);font-weight:500;
+  cursor:pointer;border-radius:var(--radius);transition:all .2s;min-width:64px;text-align:center;
 }
 .mode-btn:hover{background:var(--bg);border-color:rgba(91,123,122,0.2);color:var(--ink)}
 .mode-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .mode-btn.primary:hover{background:#6b8b8a;border-color:#6b8b8a}
-#view-lb{margin-top:4px;font-size:.8rem}
+.mode-btn:focus-visible,.result-actions button:focus-visible,.lb-controls button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.theme-presets button:focus-visible,.font-pair-select button:focus-visible,.caret-styles button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#view-lb{margin-top:8px;font-size:.8rem}
 
-/* ── Settings Drawer ── */
 #settings-overlay{
   position:fixed;inset:0;background:rgba(42,41,38,0.3);z-index:200;
   opacity:0;pointer-events:none;transition:opacity .3s ease;
@@ -51,19 +68,16 @@ body{
   background:var(--bg);border-left:1px solid var(--surface);z-index:201;
   transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
   display:flex;flex-direction:column;padding:28px 24px;overflow-y:auto;
-  box-shadow:-4px 0 24px rgba(42,41,38,0.08);
 }
 #settings-drawer.open{transform:translateX(0)}
 #settings-drawer h3{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--ink);margin-bottom:20px;letter-spacing:-.5px}
 #settings-drawer .close-btn{position:absolute;top:20px;right:20px;background:none;border:none;color:var(--ink-muted);font-size:1.2rem;cursor:pointer;font-family:var(--font-ui)}
+#settings-drawer .close-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #settings-drawer .close-btn:hover{color:var(--ink)}
 .setting-group{margin-bottom:20px}
-.setting-group .sglabel{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-muted);margin-bottom:8px}
+.setting-group .sglabel{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-muted);margin-bottom:8px}
 .theme-presets{display:flex;gap:6px;flex-wrap:wrap}
-.theme-presets button{
-  width:32px;height:32px;border-radius:50%;border:2px solid transparent;
-  cursor:pointer;transition:all .2s;position:relative;
-}
+.theme-presets button{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .2s;position:relative}
 .theme-presets button.active{border-color:var(--ink)}
 .theme-presets button::after{content:'';position:absolute;inset:3px;border-radius:50%}
 .theme-presets .tp-adept{background:#FAFAF8;border-color:#E0DDD6}
@@ -74,11 +88,11 @@ body{
 .theme-presets .tp-mint::after{background:#F2F7F0}
 .theme-presets .tp-clay{background:#F6F1EE;border-color:#E3D8D2}
 .theme-presets .tp-clay::after{background:#F6F1EE}
-.font-pair-select{display:flex;gap:6px;flex-wrap:wrap}
+.font-pair-select{display:flex;gap:4px;flex-wrap:wrap}
 .font-pair-select button{
   background:var(--surface);border:1px solid transparent;color:var(--ink-muted);
-  padding:8px 14px;font-size:.8rem;font-family:var(--font-ui);font-weight:500;
-  cursor:pointer;border-radius:6px;transition:all .15s;
+  padding:6px 10px;font-size:.72rem;font-family:var(--font-ui);font-weight:500;
+  cursor:pointer;border-radius:6px;transition:all .15s;white-space:nowrap;
 }
 .font-pair-select button.active{border-color:var(--accent);color:var(--ink);background:var(--bg)}
 .caret-styles{display:flex;gap:6px}
@@ -89,14 +103,8 @@ body{
 }
 .caret-styles button.active{border-color:var(--accent);color:var(--ink);background:var(--bg)}
 .custom-color-row{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
-.custom-color-row label{font-size:.75rem;color:var(--ink-muted)}
+.custom-color-row label{font-size:.7rem;color:var(--ink-muted)}
 .custom-color-row input[type=color]{width:28px;height:28px;border:1px solid var(--surface);border-radius:4px;cursor:pointer;padding:0;background:none}
-.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
-.toggle-row label{font-size:.85rem;color:var(--ink);font-weight:450}
-.toggle{width:38px;height:22px;background:var(--surface);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
-.toggle.active{background:var(--accent)}
-.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
-.toggle.active::after{transform:translateX(16px)}
 #settings-trigger{
   position:fixed;bottom:20px;right:20px;z-index:50;
   background:var(--surface);border:1px solid transparent;color:var(--ink-muted);
@@ -104,53 +112,43 @@ body{
   display:flex;align-items:center;justify-content:center;transition:all .2s;
   font-family:var(--font-ui);
 }
+#settings-trigger:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #settings-trigger:hover{color:var(--ink);border-color:rgba(91,123,122,0.3)}
 
-/* ── Game ── */
-#game-screen{padding:16px;gap:8px}
+#game-screen{padding:16px;gap:6px}
 #game-stats{
-  display:flex;gap:20px;align-items:center;justify-content:center;
-  height:32px;opacity:0;transition:opacity .3s;font-family:var(--font-mono);
-  font-size:.85rem;color:var(--ink-muted);letter-spacing:.3px;
+  display:flex;gap:12px;align-items:center;justify-content:center;
+  height:28px;opacity:0;transition:opacity .3s;
+  font-family:var(--font-mono);font-size:.8rem;color:var(--ink-muted);letter-spacing:.2px;
 }
 #game-stats.visible{opacity:1}
-#game-stats .stat-sep{color:var(--surface)}
-#game-canvas{
-  width:100%;max-width:820px;background:transparent;
-  display:block;cursor:text;outline:none;border-radius:var(--radius);
-  min-height:200px;
-}
-#progress-line{
-  width:100%;max-width:820px;height:2px;background:var(--surface);border-radius:1px;
-  overflow:hidden;opacity:0;transition:opacity .4s;
-}
+#game-stats .stat-sep{color:var(--surface);font-size:.65rem}
+#game-stats .stat-label{font-family:var(--font-ui);font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-muted);margin-right:2px}
+#game-canvas{width:100%;max-width:820px;background:transparent;display:block;cursor:text;outline:none;border-radius:var(--radius);min-height:200px}
+#progress-line{width:100%;max-width:820px;height:2px;background:var(--surface);border-radius:1px;overflow:hidden;opacity:0;transition:opacity .4s}
 #progress-line.visible{opacity:1}
 #progress-line-fill{height:100%;width:0%;background:var(--accent);border-radius:1px;transition:width .2s ease}
 
-/* ── Combo ── */
 #combo-display{
   position:fixed;top:45%;left:50%;transform:translate(-50%,-50%) scale(.8);
   pointer-events:none;font-family:var(--font-mono);font-size:2rem;font-weight:500;
   opacity:0;z-index:100;color:var(--ink-muted);transition:all .3s cubic-bezier(.4,0,.2,1);
 }
 
-/* ── Results ── */
-#results{
-  gap:8px;perspective:800px;
-}
+#results{gap:8px}
 #results.prepare #result-content{opacity:0;transform:translateY(12px) scale(.97)}
 #results.go #result-content{opacity:1;transform:translateY(0) scale(1);transition:all .5s cubic-bezier(.4,0,.2,1)}
 #result-content{max-width:520px;width:100%}
 #results h2{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;letter-spacing:-1px;color:var(--ink);margin-bottom:4px}
 .result-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
 .result-item{background:var(--surface);border-radius:var(--radius);padding:14px;border:1px solid transparent}
-.result-item .rlabel{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-muted)}
+.result-item .rlabel{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-muted)}
 .result-item .rvalue{font-family:var(--font-mono);font-size:1.5rem;font-weight:500;margin-top:4px;color:var(--ink)}
 .result-item .rvalue.green{color:var(--correct)}
 .result-item .rvalue.red{color:var(--error)}
 .result-item .rvalue.gold{color:var(--ink-muted)}
 .sparkline-wrap{margin:4px 0;max-width:520px;width:100%}
-.sparkline-wrap .slabel{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-muted);margin-bottom:4px}
+.sparkline-wrap .slabel{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-muted);margin-bottom:4px}
 #sparkline{width:100%;height:40px;background:var(--surface);border-radius:6px;display:block}
 .result-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;justify-content:center}
 .result-actions button{
@@ -162,60 +160,73 @@ body{
 .result-actions button.primary{background:var(--accent);color:#fff}
 .result-actions button.primary:hover{background:#6b8b8a}
 
-/* ── Leaderboard ── */
 #leaderboard{width:100%;max-width:640px}
 #leaderboard h2{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;letter-spacing:-1px;color:var(--ink);margin-bottom:12px;text-align:center}
 .lb-controls{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
 .lb-controls button{
   background:var(--surface);border:1px solid transparent;color:var(--ink-muted);
-  padding:6px 16px;font-size:.75rem;font-family:var(--font-ui);font-weight:500;
-  cursor:pointer;border-radius:6px;transition:all .15s;
+  padding:6px 16px;font-size:.75rem;font-family:var(--font-ui);font-weight:500;cursor:pointer;border-radius:6px;transition:all .15s;
 }
 .lb-controls button:hover{background:var(--bg);border-color:rgba(91,123,122,0.15)}
 .lb-controls button.active{background:var(--accent);color:#fff}
 .lb-table{width:100%;border-collapse:collapse}
-.lb-table th{text-align:left;font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-muted);padding:8px 10px;border-bottom:1px solid var(--surface)}
+.lb-table th{text-align:left;font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-muted);padding:8px 10px;border-bottom:1px solid var(--surface)}
 .lb-table td{padding:8px 10px;border-bottom:1px solid var(--surface);font-size:.85rem;font-family:var(--font-mono);font-weight:450;color:var(--ink)}
 .lb-table tr:hover td{background:var(--surface);border-radius:4px}
 .lb-table .rank{color:var(--ink-muted);font-weight:400}
-.empty-state{text-align:center;color:var(--ink-muted);padding:40px;font-size:.9rem}
+.empty-state{text-align:center;color:var(--ink-muted);padding:40px;font-size:.85rem}
 .clear-btn{background:transparent;border:1px solid var(--error);color:var(--error);padding:6px 16px;font-size:.75rem;font-family:var(--font-ui);font-weight:500;cursor:pointer;border-radius:6px;margin-top:8px;transition:all .15s}
 .clear-btn:hover{background:var(--error);color:#fff}
 
-/* ── Reduced motion ── */
+#app-footer{position:fixed;bottom:10px;left:0;right:0;text-align:center;font-size:.6rem;color:var(--surface);letter-spacing:1px;pointer-events:none;z-index:1;font-family:var(--font-mono)}
+
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
   #settings-drawer{transition-duration:.01ms!important}
   #results #result-content{transition-duration:.01ms!important}
   #combo-display{transition-duration:.01ms!important}
+  #progress-line-fill{transition-duration:.01ms!important}
 }
-
 @media(max-width:600px){
   #home h1{font-size:2rem}
-  .mode-btn{padding:10px 16px;min-width:80px;font-size:.8rem}
+  .mode-btn{padding:8px 14px;min-width:56px;font-size:.75rem}
+  .mode-group+.mode-group::before{display:none}
+  .modes{gap:4px;max-width:100%}
   .result-grid{grid-template-columns:1fr 1fr}
   #settings-drawer{width:100vw;max-width:100vw}
+  #game-stats{font-size:.7rem;gap:8px}
 }
 </style>
 </head>
 <body>
 
+<nav id="nav-bar">
+  <button class="nav-btn home-link" id="nav-home" title="home">⌨ adept</button>
+  <button class="nav-btn" id="nav-lb" title="leaderboard">leaderboard</button>
+</nav>
+
 <div id="home" class="screen">
   <h1>⌨ adept</h1>
   <p class="sub">a typing challenge</p>
   <div class="modes">
-    <button class="mode-btn" data-mode="15">15s</button>
-    <button class="mode-btn" data-mode="30">30s</button>
-    <button class="mode-btn" data-mode="60">60s</button>
-    <button class="mode-btn" data-mode="words50">50 words</button>
-    <button class="mode-btn" data-mode="zen">zen</button>
-    <button class="mode-btn primary" data-mode="daily">daily</button>
+    <div class="mode-group">
+      <button class="mode-btn" data-mode="15">15s</button>
+      <button class="mode-btn" data-mode="30">30s</button>
+      <button class="mode-btn" data-mode="60">60s</button>
+    </div>
+    <div class="mode-group">
+      <button class="mode-btn" data-mode="words50">50 words</button>
+      <button class="mode-btn" data-mode="zen">zen</button>
+    </div>
+    <div class="mode-group">
+      <button class="mode-btn primary" data-mode="daily">daily</button>
+    </div>
   </div>
   <button class="mode-btn" id="view-lb">leaderboard</button>
 </div>
 
 <div id="game-screen" class="screen hidden">
-  <div id="game-stats"><span id="gs-wpm">0</span><span class="stat-sep">·</span><span id="gs-acc">100</span><span class="stat-sep">·</span><span id="gs-raw">0</span><span class="stat-sep">·</span><span id="gs-mode">30s</span><span class="stat-sep">·</span><span id="gs-timer">30</span></div>
+  <div id="game-stats"><span class="stat-label">wpm</span><span id="gs-wpm">0</span><span class="stat-sep">·</span><span class="stat-label">acc</span><span id="gs-acc">100</span><span class="stat-sep">·</span><span class="stat-label">raw</span><span id="gs-raw">0</span><span class="stat-sep">·</span><span id="gs-mode-label"></span><span class="stat-sep">·</span><span id="gs-timer">—</span></div>
   <canvas id="game-canvas" tabindex="0"></canvas>
   <div id="progress-line"><div id="progress-line-fill"></div></div>
 </div>
@@ -259,6 +270,7 @@ body{
 </div>
 
 <button id="settings-trigger" title="settings (⌘K)">⚙</button>
+<div id="app-footer">— · —</div>
 
 <div id="settings-overlay"></div>
 <div id="settings-drawer">
@@ -397,11 +409,11 @@ async function getDB() {
     const req = indexedDB.open('TypingChallenge', 2);
     req.onupgradeneeded = e => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains('runs'))
-        { const s = db.createObjectStore('runs', { keyPath: 'id', autoIncrement: true });
-          s.createIndex('mode','mode'); s.createIndex('wpm','wpm'); s.createIndex('date','date'); s.createIndex('dailySeed','dailySeed'); }
-      if (!db.objectStoreNames.contains('settings'))
-        db.createObjectStore('settings', { keyPath: 'key' });
+      if (!db.objectStoreNames.contains('runs')) {
+        const s = db.createObjectStore('runs', { keyPath: 'id', autoIncrement: true });
+        s.createIndex('mode','mode'); s.createIndex('wpm','wpm'); s.createIndex('date','date'); s.createIndex('dailySeed','dailySeed');
+      }
+      if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
     };
     req.onsuccess = () => { dbInstance = req.result; resolve(dbInstance); };
     req.onerror = () => reject(req.error);
@@ -409,53 +421,36 @@ async function getDB() {
 }
 async function saveRun(run) {
   const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('runs','readwrite');
-    tx.objectStore('runs').add({
-      wpm: Math.round(run.wpm), raw: Math.round(run.raw || 0), accuracy: Math.round(run.accuracy),
-      mode: run.mode, duration: run.duration, correct: run.correct, errors: run.errors, total: run.total,
-      date: Date.now(), dailySeed: run.dailySeed || null
-    }).onsuccess = () => resolve();
-    tx.onerror = () => reject(tx.error);
+  const tx = db.transaction('runs','readwrite');
+  tx.objectStore('runs').add({
+    wpm: Math.round(run.wpm), raw: Math.round(run.raw||0), accuracy: Math.round(run.accuracy),
+    mode: run.mode, duration: run.duration, correct: run.correct, errors: run.errors, total: run.total,
+    date: Date.now(), dailySeed: run.dailySeed||null
   });
+  return new Promise(r => tx.oncomplete = () => r());
 }
 async function getAllRuns() {
   const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('runs','readonly');
-    const req = tx.objectStore('runs').getAll();
-    req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error);
+  return new Promise(resolve => {
+    db.transaction('runs','readonly').objectStore('runs').getAll().onsuccess = e => resolve(e.target.result);
   });
 }
 async function clearRuns() {
   const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('runs','readwrite');
-    tx.objectStore('runs').clear().onsuccess = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  return new Promise(resolve => { db.transaction('runs','readwrite').objectStore('runs').clear().onsuccess = () => resolve(); });
 }
 async function getDailyRun(seed) {
   const all = await getAllRuns(); return all.find(r => r.dailySeed === seed) || null;
 }
 async function saveSetting(key, val) {
   const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('settings','readwrite');
-    tx.objectStore('settings').put({ key, value: JSON.stringify(val) }).onsuccess = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  db.transaction('settings','readwrite').objectStore('settings').put({ key, value: JSON.stringify(val) });
 }
 async function loadSettings() {
   const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('settings','readonly');
-    const req = tx.objectStore('settings').getAll();
-    req.onsuccess = () => {
-      const map = {}; for (const r of req.result) map[r.key] = JSON.parse(r.value);
-      resolve(map);
-    };
-    req.onerror = () => reject(req.error);
+  return new Promise(resolve => {
+    const req = db.transaction('settings','readonly').objectStore('settings').getAll();
+    req.onsuccess = () => { const m={}; for(const r of req.result) m[r.key]=JSON.parse(r.value); resolve(m); };
   });
 }
 
@@ -471,7 +466,7 @@ const THEMES = {
 const FONT_PAIRS = [
   { name:'JetBrains Mono + Space Grotesk', ui:'"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', mono:'"JetBrains Mono","Consolas","Courier New",monospace' },
   { name:'Berkeley Mono + Söhne', ui:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,sans-serif', mono:'"Berkeley Mono","JetBrains Mono","Consolas",monospace' },
-  { name:'IBM Plex Mono + Inter', ui:'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', mono:'"IBM Plex Mono","JetBrains Mono","Consolas",monospace' },
+  { name:'IBM Plex Mono + Inter', ui:'"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', mono:'"IBM Plex Mono","JetBrains Mono","Consolas",monospace' },
   { name:'Fira Code + DM Sans', ui:'"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', mono:'"Fira Code","JetBrains Mono","Consolas",monospace' },
 ];
 
@@ -480,27 +475,22 @@ let settingsLoaded = false;
 
 function applyTheme(t) {
   const th = THEMES[t] || THEMES.paper;
-  document.documentElement.style.setProperty('--bg', th.bg);
-  document.documentElement.style.setProperty('--surface', th.surface);
-  document.documentElement.style.setProperty('--ink', th.ink);
-  document.documentElement.style.setProperty('--ink-muted', th.inkMuted);
-  document.documentElement.style.setProperty('--accent', th.accent);
-  document.documentElement.style.setProperty('--correct', th.correct);
-  document.documentElement.style.setProperty('--error', th.error);
+  const r = document.documentElement.style;
+  r.setProperty('--bg', th.bg); r.setProperty('--surface', th.surface);
+  r.setProperty('--ink', th.ink); r.setProperty('--ink-muted', th.inkMuted);
+  r.setProperty('--accent', th.accent); r.setProperty('--correct', th.correct); r.setProperty('--error', th.error);
   document.querySelectorAll('.theme-presets button').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
-  document.getElementById('c-accent').value = rgbToHex(th.accent);
-  document.getElementById('c-correct').value = rgbToHex(th.correct);
-  document.getElementById('c-error').value = rgbToHex(th.error);
+  document.getElementById('c-accent').value = th.accent;
+  document.getElementById('c-correct').value = th.correct;
+  document.getElementById('c-error').value = th.error;
   settings.theme = t; settings.accent = th.accent; settings.correct = th.correct; settings.error = th.error;
   if (settingsLoaded) saveSetting('theme', t);
 }
-
 function applyCustomColor(key, val) {
-  document.documentElement.style.setProperty(`--${key}`, val);
+  document.documentElement.style.setProperty('--'+key, val);
   settings[key] = val;
   if (settingsLoaded) saveSetting(key, val);
 }
-
 function applyFontPair(idx) {
   const p = FONT_PAIRS[idx] || FONT_PAIRS[0];
   document.documentElement.style.setProperty('--font-ui', p.ui);
@@ -509,39 +499,28 @@ function applyFontPair(idx) {
   settings.fontPair = idx;
   if (settingsLoaded) saveSetting('fontPair', idx);
 }
-
 function applyCaretStyle(s) {
   document.documentElement.style.setProperty('--caret-style', s);
   document.querySelectorAll('.caret-styles button').forEach(b => b.classList.toggle('active', b.dataset.caret === s));
   settings.caretStyle = s;
   if (settingsLoaded) saveSetting('caretStyle', s);
 }
-
 function applySoundPack(idx) {
   settings.soundPack = idx;
   document.querySelectorAll('#sound-packs button').forEach(b => b.classList.toggle('active', parseInt(b.dataset.pack) === idx));
   if (settingsLoaded) saveSetting('soundPack', idx);
 }
 
-function rgbToHex(rgb) {
-  if (rgb.startsWith('#')) return rgb;
-  const m = rgb.match(/rgba?\((\d+),(\d+),(\d+)/);
-  if (!m) return '#5b7b7a';
-  return '#' + [m[1],m[2],m[3]].map(c => parseInt(c).toString(16).padStart(2,'0')).join('');
-}
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  SPRING PHYSICS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 class Spring {
   constructor(v=0, stiffness=200, damping=16) { this.value=v; this.velocity=0; this.stiffness=stiffness; this.damping=damping; this.target=v; }
   snap(v) { this.value=v; this.velocity=0; this.target=v; }
   setTarget(t) { this.target=t; }
   update(dt) {
-    if (RM) { this.value = this.target; this.velocity = 0; return true; }
-    if (dt<=0) return true;
+    if (RM||dt<=0) { this.value=this.target; this.velocity=0; return true; }
     const diff = this.target - this.value;
     this.velocity += diff * this.stiffness * dt;
     this.velocity *= Math.max(0, 1 - this.damping * dt);
@@ -549,7 +528,6 @@ class Spring {
     return Math.abs(diff) < 0.5 && Math.abs(this.velocity) < 0.5;
   }
 }
-
 class AnimatedNum {
   constructor(v=0, speed=6) { this.current=v; this.target=v; this.speed=speed; }
   setTarget(t) { this.target=t; }
@@ -591,7 +569,7 @@ class GameState {
       this.wordIndex++; this.charIndex = 0;
       if (this.wordIndex >= this.words.length) { this.isFinished = true; this.endTime = performance.now(); }
     }
-    return { correct, wordCompleted, wordAllCorrect: wordCompleted && this.results[this.wordIndex-1].every(r => r === 'correct') };
+    return { correct, wordCompleted };
   }
   backspace() {
     if (this.isFinished) return;
@@ -615,7 +593,7 @@ class GameState {
     if (this.isTimed && this.elapsed>=this.duration) { this.isFinished=true; this.endTime=performance.now(); return true; }
     return false;
   }
-  get timeLeft() { return this.isTimed ? Math.max(0, this.duration-this.elapsed) : 0; }
+  get timeLeft() { return this.isTimed ? Math.max(0, this.duration-this.elapsed) : -1; }
   get progress() { return this.isWordMode||this.isDaily ? this.wordIndex/this.words.length : this.isTimed&&this.duration>0 ? Math.min(1,this.elapsed/this.duration) : 0; }
 }
 
@@ -628,17 +606,15 @@ const SOUND_PACKS = [
   { name:'cherry mx brown', correctFreq:1200, errorFreq:250, correctDur:.04, errorDur:.06, correctType:'sine', errorType:'triangle', vol:.035 },
 ];
 function playClick(correct) {
-  const packIdx = settings.soundPack;
-  if (packIdx < 0 || packIdx >= SOUND_PACKS.length) return;
+  const idx = settings.soundPack;
+  if (idx < 0 || idx >= SOUND_PACKS.length) return;
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const sp = SOUND_PACKS[packIdx];
-    const t = audioCtx.currentTime;
+    const sp = SOUND_PACKS[idx]; const t = audioCtx.currentTime;
     const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.type = correct ? sp.correctType : sp.errorType;
     const dur = correct ? sp.correctDur : sp.errorDur;
-    // double-hit for mechanical feel
     gain.gain.setValueAtTime(sp.vol, t);
     gain.gain.linearRampToValueAtTime(sp.vol*0.4, t + dur*0.3);
     gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
@@ -649,26 +625,17 @@ function playClick(correct) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  CANVAS RENDERER  (with motion layer)
+//  CANVAS RENDERER
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const COLORS = {
-  get correct() { return getComputedStyle(document.documentElement).getPropertyValue('--correct').trim() || '#7A9A6E'; },
-  get error() { return getComputedStyle(document.documentElement).getPropertyValue('--error').trim() || '#B5766A'; },
-  get dim() { return getComputedStyle(document.documentElement).getPropertyValue('--ink-muted').trim() || '#8A8880'; },
-  get accent() { return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5B7B7A'; },
-  get ink() { return getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#2A2926'; },
-};
-const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue('--'+name).trim() || '#8A8880';
+}
 class Renderer {
   constructor(canvas) {
     this.canvas = canvas; this.ctx = canvas.getContext('2d');
     this.fontSize = 22; this.lineH = 42; this.padX = 24; this.padY = 16;
     this.charW = 0; this.displayW = 800; this.dpr = window.devicePixelRatio||1;
-    this.caretX = new Spring(0, 220, 18);
-    this.caretY = new Spring(0, 220, 18);
-    this.caretW = new Spring(0, 220, 18);
-    this.caretH = new Spring(0, 220, 18);
+    this.caretX = new Spring(0, 220, 18); this.caretY = new Spring(0, 220, 18);
     this.resize(); window.addEventListener('resize', () => this.resize());
   }
   resize() {
@@ -676,15 +643,15 @@ class Renderer {
     this.displayW = Math.min(p.clientWidth-2, 820);
     this.canvas.style.width = this.displayW+'px';
   }
+  get monoFont() { return `500 ${this.fontSize}px ${cssVar('font-mono').split(',')[0].replace(/"/g,'')},Consolas,monospace`; }
   measureChar() {
-    this.ctx.font = `500 ${this.fontSize}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-mono').split(',')[0].replace(/"/g,'')},Consolas,monospace`;
+    this.ctx.font = this.monoFont;
     this.charW = this.ctx.measureText('m').width;
   }
   layout(words) {
     this.measureChar();
     const maxC = Math.max(1, Math.floor((this.displayW - this.padX*2) / this.charW));
-    const rows = [], wtr = [];
-    let cur = [], len = 0;
+    const rows = [], wtr = []; let cur = [], len = 0;
     for (const w of words) {
       const sep = cur.length?1:0;
       if (len+sep+w.length > maxC && cur.length) { rows.push(cur); cur=[w]; len=w.length; }
@@ -699,48 +666,48 @@ class Renderer {
     const ctx = this.ctx, dpr = this.dpr;
     this.resize();
     const w = Math.max(100, this.displayW);
+    const cC = (v) => getComputedStyle(document.documentElement).getPropertyValue('--'+v).trim();
+    const cCorrect = cC('correct')||'#7A9A6E', cError = cC('error')||'#B5766A', cDim = cC('ink-muted')||'#8A8880';
+    const cAccent = cC('accent')||'#5B7B7A', cInk = cC('ink')||'#2A2926', cSurface = cC('surface')||'#F1F0EC';
+    const monoFont = this.monoFont;
 
     if (state.isZen) {
-      // ── Zen: centered single word ──
-      const zf = 48;
-      const vh = 180;
+      const zf = 48; const vh = 180;
       this.canvas.width = w*dpr; this.canvas.height = vh*dpr;
       this.canvas.style.height = vh+'px';
       ctx.setTransform(dpr,0,0,dpr,0,0);
       ctx.clearRect(0,0,w,vh);
-      ctx.font = `500 ${zf}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-mono').split(',')[0].replace(/"/g,'')},Consolas,monospace`;
-      ctx.textBaseline = 'middle';
-      const chW = ctx.measureText('m').width;
       const cw = state.currentWord||'';
       const nw = state.wordIndex+1 < state.words.length ? state.words[state.wordIndex+1] : '';
-      if (nw) { ctx.font=`400 20px ${getComputedStyle(document.documentElement).getPropertyValue('--font-mono').split(',')[0].replace(/"/g,'')},monospace`;
-        ctx.fillStyle = COLORS.dim + '44'; ctx.textAlign='center';
-        ctx.fillText(nw, w/2, vh/2 + zf + 18); ctx.textAlign='start'; }
-      ctx.font = `500 ${zf}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-mono').split(',')[0].replace(/"/g,'')},Consolas,monospace`;
+      if (nw) {
+        ctx.font = `500 20px ${cssVar('font-mono').split(',')[0].replace(/"/g,'')},Consolas,monospace`;
+        ctx.fillStyle = cDim + '66'; ctx.textAlign='center';
+        ctx.fillText(nw, w/2, vh/2 + zf + 18); ctx.textAlign='start';
+      }
+      ctx.font = `500 ${zf}px ${cssVar('font-mono').split(',')[0].replace(/"/g,'')},Consolas,monospace`;
+      ctx.textBaseline = 'middle';
+      const chW = ctx.measureText('m').width;
       const res = state.results[state.wordIndex]||[];
       const tw = cw.length*chW; let sx = (w-tw)/2;
       for (let ci=0;ci<cw.length;ci++) {
-        const r = res[ci];
-        let color;
-        if (r==='correct') color = COLORS.correct;
-        else if (r==='incorrect') color = COLORS.error;
-        else if (ci===state.charIndex) color = COLORS.ink;
-        else color = COLORS.dim;
+        const r = res[ci]; let color;
+        if (r==='correct') color = cCorrect;
+        else if (r==='incorrect') color = cError;
+        else if (ci===state.charIndex) color = cInk;
+        else color = cDim;
         ctx.fillStyle = color; ctx.fillText(cw[ci], sx, vh/2 - 4); sx += chW;
       }
       if (anims && anims.flashes && anims.flashes.length) {
-        const f = anims.flashes[anims.flashes.length-1];
-        const a = REDUCED ? 0 : 1 - f.progress;
+        const f = anims.flashes[anims.flashes.length-1]; const a = RM?0:1-f.progress;
         ctx.fillStyle = f.correct ? `rgba(122,154,110,${.1*a})` : `rgba(181,118,106,${.1*a})`;
         ctx.fillRect((w-tw)/2-4, vh/2-zf/2-4, tw+8, zf+8);
       }
       return;
     }
 
-    // ── Normal layout ──
     const { rows, wordToRow } = this.layout(state.words);
     const totalH = rows.length * this.lineH + this.padY * 2;
-    const viewH = Math.min(totalH, 340);
+    const viewH = Math.min(totalH, 300);
     this.canvas.width = w*dpr; this.canvas.height = viewH*dpr;
     this.canvas.style.height = viewH+'px';
     ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -752,49 +719,38 @@ class Renderer {
 
     ctx.save(); ctx.beginPath(); ctx.rect(0,0,w,viewH); ctx.clip();
     ctx.translate(0, -scrollY);
-    ctx.font = `500 ${this.fontSize}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-mono').split(',')[0].replace(/"/g,'')},Consolas,monospace`;
-    ctx.textBaseline = 'top';
+    ctx.font = monoFont; ctx.textBaseline = 'top';
     this.measureChar();
 
     const flashMap = {};
     if (anims && anims.flashes) for (const f of anims.flashes) flashMap[f.wordIdx] = f;
 
-    let gwi = 0, ty = this.padY;
-    // compute caret target position
-    let caretTargetX = this.padX, caretTargetY = this.padY, caretTargetW = 0, caretTargetH = this.fontSize;
+    let cTX = this.padX, cTY = this.padY, found = false;
+    let gwi = 0, try_ = this.padY;
     for (const row of rows) {
-      let tx = this.padX; let found = false;
+      let tx = this.padX;
       for (let wi=0;wi<row.length;wi++) {
-        const word = row[wi];
         if (wi>0) tx += this.charW;
-        if (gwi === state.wordIndex) {
-          caretTargetX = tx + state.charIndex * this.charW;
-          caretTargetY = ty;
-          caretTargetW = 2;
-          found = true; break;
-        }
-        tx += word.length * this.charW; gwi++;
+        if (gwi === state.wordIndex) { cTX = tx + state.charIndex * this.charW; cTY = try_; found = true; break; }
+        tx += row[wi].length * this.charW; gwi++;
       }
-      if (found) break;
-      ty += this.lineH;
+      if (found) break; try_ += this.lineH;
     }
-    this.caretX.setTarget(caretTargetX - scrollY);
-    this.caretY.setTarget(caretTargetY - scrollY);
-    this.caretW.setTarget(caretTargetW);
-    this.caretH.setTarget(caretTargetH);
-    this.caretX.update(dt); this.caretY.update(dt); this.caretW.update(dt); this.caretH.update(dt);
+    this.caretX.setTarget(cTX - scrollY); this.caretY.setTarget(cTY - scrollY);
+    this.caretX.update(dt); this.caretY.update(dt);
 
-    // draw caret with spring
     const cs = settings.caretStyle;
-    if (state.startTime && !state.isFinished) {
-      ctx.fillStyle = COLORS.accent;
+    const caretActive = state.startTime && !state.isFinished;
+
+    if (caretActive) {
+      ctx.fillStyle = cAccent;
       const cx = this.caretX.value, cy = this.caretY.value;
-      if (cs === 'block') { ctx.fillRect(cx-1, cy-1, this.charW+2, this.fontSize+2); }
-      else if (cs === 'line') { ctx.fillRect(cx-1, cy, 2, this.fontSize); }
-      else if (cs === 'underline') { ctx.fillRect(cx-1, cy+this.fontSize-3, this.charW, 2); }
+      if (cs === 'block') ctx.fillRect(cx-1, cy-1, this.charW+2, this.fontSize+2);
+      else if (cs === 'line') ctx.fillRect(cx-1, cy, 2, this.fontSize);
+      else if (cs === 'underline') ctx.fillRect(cx-1, cy+this.fontSize-3, this.charW, 2);
     }
 
-    gwi = 0; ty = this.padY;
+    gwi = 0; try_ = this.padY;
     for (const row of rows) {
       let tx = this.padX;
       for (let wi=0;wi<row.length;wi++) {
@@ -802,10 +758,10 @@ class Renderer {
         const isCur = gwi === state.wordIndex;
         const isPast = gwi < state.wordIndex;
         if (wi>0) tx += this.charW;
-        const wordX = tx, wordY = ty;
+        const wordX = tx, wordY = try_;
 
         if (flashMap[gwi]) {
-          const f = flashMap[gwi]; const a = REDUCED ? 0 : 1-f.progress;
+          const f = flashMap[gwi]; const a = RM?0:1-f.progress;
           ctx.fillStyle = f.correct ? `rgba(122,154,110,${.1*a})` : `rgba(181,118,106,${.1*a})`;
           ctx.fillRect(wordX-2, wordY-1, word.length*this.charW+4, this.fontSize+2);
         }
@@ -814,30 +770,27 @@ class Renderer {
           const ch = word[ci]; let color;
           if (isPast) {
             const r = state.results[gwi]?.[ci];
-            color = r === 'correct' ? COLORS.correct : r === 'incorrect' ? COLORS.error : COLORS.dim;
+            color = r === 'correct' ? cCorrect : r === 'incorrect' ? cError : cDim;
           } else if (isCur) {
             const r = state.results[gwi]?.[ci];
-            if (r === 'correct') color = COLORS.correct;
-            else if (r === 'incorrect') color = COLORS.error;
-            else color = COLORS.dim;
-            // Draw text in caret's complement color for block style
-            if (cs === 'block' && state.startTime && !state.isFinished && ci === state.charIndex) color = COLORS.surface || '#FAFAF8';
-          } else color = COLORS.dim;
-          ctx.fillStyle = color; ctx.fillText(ch, tx, ty); tx += this.charW;
+            if (r === 'correct') color = cCorrect;
+            else if (r === 'incorrect') color = cError;
+            else color = cDim;
+            if (cs === 'block' && caretActive && ci === state.charIndex && r == null) color = cSurface;
+          } else color = cDim;
+          ctx.fillStyle = color; ctx.fillText(ch, tx, try_); tx += this.charW;
         }
         gwi++;
       }
-      ty += this.lineH;
+      try_ += this.lineH;
     }
     ctx.restore();
 
-    // scroll dots
     if (totalH > viewH) {
-      const dots=5,dotR=3,gap=8,dh=dots*(dotR*2+gap); const sx_=w-16,sy_=(viewH-dh)/2;
-      const vs=scrollY/totalH,ve=(scrollY+viewH)/totalH;
+      const dots=4,dotR=3,gap=8; const sx_=w-16,sy_=(viewH - dots*(dotR*2+gap))/2;
       for (let i=0;i<dots;i++) {
-        const t=i/(dots-1);
-        ctx.fillStyle = t>=vs&&t<=ve ? COLORS.dim : COLORS.surface||'#F1F0EC';
+        const t=i/(dots-1), vs=scrollY/totalH, ve=(scrollY+viewH)/totalH;
+        ctx.fillStyle = t>=vs&&t<=ve ? cDim : cSurface;
         ctx.beginPath(); ctx.arc(sx_, sy_+i*(dotR*2+gap), dotR, 0, Math.PI*2); ctx.fill();
       }
     }
@@ -852,13 +805,13 @@ let gameState = null;
 let anims = { flashes:[], comboCount:0, comboElapsed:0 };
 let rafId=null, lastFrameTime=0, pendingEnd=false;
 let wpmSamples=[], sampleTimer=0;
-let wpmNum = new AnimatedNum(0, 6);
-let rawNum = new AnimatedNum(0, 6);
-let accNum = new AnimatedNum(100, 6);
+let wpmNum = new AnimatedNum(0,6), rawNum = new AnimatedNum(0,6), accNum = new AnimatedNum(100,6);
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
+  const nav = document.getElementById('nav-bar');
+  nav.style.display = (id === 'game-screen' || id === 'results') ? 'flex' : 'none';
 }
 
 async function startGame(mode) {
@@ -878,7 +831,9 @@ async function startGame(mode) {
   document.getElementById('gs-raw').textContent='0';
   document.getElementById('gs-acc').textContent='100';
   document.getElementById('gs-timer').textContent = gameState.isTimed ? String(gameState.duration) : gameState.isZen ? '∞' : '—';
-  document.getElementById('gs-mode').textContent = gameState.isDaily ? 'daily' : gameState.isZen ? 'zen' : gameState.mode === 'words50' ? '50w' : gameState.mode+'s';
+
+  const mLbl = gameState.isDaily ? 'daily' : gameState.isZen ? 'zen' : gameState.mode === 'words50' ? '50w' : gameState.mode+'s';
+  document.getElementById('gs-mode-label').textContent = mLbl;
 
   document.getElementById('progress-line').classList.remove('visible');
   document.getElementById('game-stats').classList.remove('visible');
@@ -920,8 +875,7 @@ function updateDisplay(dt) {
   document.getElementById('gs-wpm').textContent = wpmNum.value;
   document.getElementById('gs-raw').textContent = rawNum.value;
   document.getElementById('gs-acc').textContent = accNum.value;
-  const tl = gameState.timeLeft; const te = document.getElementById('gs-timer');
-  if (gameState.isTimed) te.textContent = Math.ceil(tl);
+  if (gameState.isTimed) document.getElementById('gs-timer').textContent = Math.ceil(gameState.timeLeft);
   document.getElementById('progress-line-fill').style.width = Math.min(100, gameState.progress*100)+'%';
 }
 
@@ -929,7 +883,6 @@ function triggerFlash(wordIdx, correct) {
   anims.flashes.push({wordIdx, correct, progress:0});
   if (anims.flashes.length > 10) anims.flashes.shift();
 }
-
 function triggerCombo(count) {
   const el = document.getElementById('combo-display');
   el.textContent = (count>=10?'🔥 ':'✓ ')+count;
@@ -937,7 +890,6 @@ function triggerCombo(count) {
   anims.comboCount=count; anims.comboElapsed=.8;
   el.style.opacity='1'; el.style.transform='translate(-50%,-50%) scale(1)';
 }
-
 function updateAnimations(dt) {
   anims.flashes = anims.flashes.filter(f => { f.progress += dt*5; return f.progress<1; });
   if (anims.comboElapsed > 0) {
@@ -949,6 +901,14 @@ function updateAnimations(dt) {
 }
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!document.getElementById('home').classList.contains('hidden')) return;
+    if (gameState && !gameState.isFinished && !document.getElementById('game-screen').classList.contains('hidden')) {
+      if (confirm('exit current run?')) { endGameEarly(); }
+      return;
+    }
+    showScreen('home'); return;
+  }
   if (document.getElementById('game-screen').classList.contains('hidden')) return;
   if (e.key === 'Backspace') {
     e.preventDefault();
@@ -967,34 +927,35 @@ document.addEventListener('keydown', e => {
     if (gameState.isFinished) pendingEnd=true;
   }
 });
-
 document.addEventListener('keydown', e => {
   if ((e.metaKey||e.ctrlKey) && e.key === 'k') { e.preventDefault(); toggleSettings(); }
 });
 
-// ── Sparkline ──
 function drawSparkline() {
   const c = document.getElementById('sparkline');
-  const rect = c.parentElement.getBoundingClientRect();
-  const W = Math.min(rect.width, 520), H = 40;
+  const W = Math.min(c.parentElement.getBoundingClientRect().width, 520), H = 40;
   const dpr = window.devicePixelRatio||1;
   c.width = W*dpr; c.height = H*dpr; c.style.width=W+'px'; c.style.height=H+'px';
   const ctx = c.getContext('2d');
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  if (wpmSamples.length < 2) { ctx.fillStyle=COLORS.dim; ctx.font='11px Space Grotesk,sans-serif'; ctx.textAlign='center'; ctx.fillText('not enough data', W/2, H/2+4); return; }
-  const pts = wpmSamples; const maxW = Math.max(...pts.map(p=>p.wpm),1);
-  const PAD=4,pw=W-PAD*2,ph=H-PAD*2;
+  const cDim = getComputedStyle(document.documentElement).getPropertyValue('--ink-muted').trim()||'#8A8880';
+  const cAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#5B7B7A';
+  if (wpmSamples.length < 2) {
+    ctx.fillStyle=cDim; ctx.font='11px Space Grotesk,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('not enough data', W/2, H/2+4); return;
+  }
+  const pts=wpmSamples, maxW=Math.max(...pts.map(p=>p.wpm),1);
+  const P=4,pw=W-P*2,ph=H-P*2;
   ctx.beginPath();
-  for (let i=0;i<pts.length;i++) { const x=PAD+(i/(pts.length-1))*pw, y=PAD+ph-(pts[i].wpm/maxW)*ph; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
-  ctx.strokeStyle = COLORS.accent; ctx.lineWidth=1.5; ctx.stroke();
-  ctx.lineTo(PAD+pw,PAD+ph); ctx.lineTo(PAD,PAD+ph); ctx.closePath();
-  const grad = ctx.createLinearGradient(0,PAD,0,PAD+ph); grad.addColorStop(0,'rgba(91,123,122,0.12)'); grad.addColorStop(1,'rgba(91,123,122,0.01)');
-  ctx.fillStyle=grad; ctx.fill();
-  ctx.fillStyle=COLORS.dim; ctx.font='8px Space Grotesk,sans-serif'; ctx.textAlign='right';
-  ctx.fillText(Math.round(maxW)+'wpm', W-PAD, PAD+9);
+  for(let i=0;i<pts.length;i++){const x=P+(i/(pts.length-1))*pw,y=P+ph-(pts[i].wpm/maxW)*ph;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.strokeStyle=cAccent; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.lineTo(P+pw,P+ph); ctx.lineTo(P,P+ph); ctx.closePath();
+  const g=ctx.createLinearGradient(0,P,0,P+ph); g.addColorStop(0,'rgba(91,123,122,0.12)'); g.addColorStop(1,'rgba(91,123,122,0.01)');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.fillStyle=cDim; ctx.font='8px Space Grotesk,sans-serif'; ctx.textAlign='right';
+  ctx.fillText(Math.round(maxW)+'wpm', W-P, P+9);
 }
 
-// ── End Game ──
 function endGame() {
   if (rafId) { cancelAnimationFrame(rafId); rafId=null; }
   const s = gameState.getStats();
@@ -1005,19 +966,23 @@ function endGame() {
   document.getElementById('r-correct').textContent = s.correct;
   document.getElementById('r-errors').textContent = s.errors;
   document.getElementById('result-title').textContent = gameState.isDaily ? 'daily challenge complete' : 'run complete';
-
-  // transition: prepare + go
   const rs = document.getElementById('results');
   rs.classList.add('prepare'); rs.classList.remove('go');
   showScreen('results');
   requestAnimationFrame(() => { requestAnimationFrame(() => { rs.classList.remove('prepare'); rs.classList.add('go'); }); });
   drawSparkline();
-
   saveRun({
     wpm:s.wpm, raw:s.raw, accuracy:s.accuracy, mode:gameState.mode,
     duration:gameState.isTimed ? gameState.duration : s.elapsed,
     correct:s.correct, errors:s.errors, total:s.total, dailySeed:gameState.dailySeed
   }).catch(()=>{});
+}
+
+function endGameEarly() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId=null; }
+  gameState.isFinished = true;
+  gameState.endTime = performance.now();
+  showScreen('home');
 }
 
 function showDailyResult(run) {
@@ -1035,35 +1000,36 @@ function showDailyResult(run) {
   drawSparkline();
 }
 
-// ── Settings Panel ──
 let settingsOpen = false;
 function toggleSettings() {
   settingsOpen = !settingsOpen;
   document.getElementById('settings-overlay').classList.toggle('open', settingsOpen);
   document.getElementById('settings-drawer').classList.toggle('open', settingsOpen);
 }
-
 document.getElementById('settings-trigger').addEventListener('click', toggleSettings);
 document.getElementById('settings-close').addEventListener('click', toggleSettings);
 document.getElementById('settings-overlay').addEventListener('click', toggleSettings);
-
-document.querySelectorAll('.theme-presets button').forEach(btn => {
-  btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
-});
-document.querySelectorAll('.font-pair-select button').forEach(btn => {
-  btn.addEventListener('click', () => applyFontPair(parseInt(btn.dataset.pair)));
-});
-document.querySelectorAll('.caret-styles button').forEach(btn => {
-  btn.addEventListener('click', () => applyCaretStyle(btn.dataset.caret));
-});
-document.querySelectorAll('#sound-packs button').forEach(btn => {
-  btn.addEventListener('click', () => applySoundPack(parseInt(btn.dataset.pack)));
-});
+document.querySelectorAll('.theme-presets button').forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.theme)));
+document.querySelectorAll('.font-pair-select button').forEach(btn => btn.addEventListener('click', () => applyFontPair(parseInt(btn.dataset.pair))));
+document.querySelectorAll('.caret-styles button').forEach(btn => btn.addEventListener('click', () => applyCaretStyle(btn.dataset.caret)));
+document.querySelectorAll('#sound-packs button').forEach(btn => btn.addEventListener('click', () => applySoundPack(parseInt(btn.dataset.pack))));
 document.getElementById('c-accent').addEventListener('input', e => applyCustomColor('accent', e.target.value));
 document.getElementById('c-correct').addEventListener('input', e => applyCustomColor('correct', e.target.value));
 document.getElementById('c-error').addEventListener('input', e => applyCustomColor('error', e.target.value));
 
-// ── Leaderboard ──
+document.getElementById('nav-home').addEventListener('click', () => {
+  if (!document.getElementById('home').classList.contains('hidden')) return;
+  if (gameState && !gameState.isFinished && !document.getElementById('game-screen').classList.contains('hidden')) {
+    if (!confirm('exit current run?')) return; endGameEarly();
+  } else showScreen('home');
+});
+document.getElementById('nav-lb').addEventListener('click', async () => {
+  if (gameState && !gameState.isFinished && !document.getElementById('game-screen').classList.contains('hidden')) {
+    if (!confirm('exit current run?')) return; endGameEarly();
+  }
+  showScreen('leaderboard'); await refreshLB();
+});
+
 let lbSort = 'wpm';
 async function refreshLB() {
   const runs = await getAllRuns();
@@ -1077,14 +1043,13 @@ async function refreshLB() {
   for (let i=0;i<Math.min(sorted.length,50);i++) {
     const r=sorted[i]; const d=new Date(r.date);
     const ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-    const ms= r.mode==='daily'?'daily':r.mode==='words50'?'50w':r.mode==='zen'?'zen':r.mode+'s';
+    const ms=r.mode==='daily'?'daily':r.mode==='words50'?'50w':r.mode==='zen'?'zen':r.mode+'s';
     const tr=document.createElement('tr');
     tr.innerHTML=`<td class="rank">${i+1}</td><td>${r.wpm}</td><td>${r.accuracy}%</td><td>${ms}</td><td>${ds}</td>`;
     tbody.appendChild(tr);
   }
 }
 
-// ── Navigation ──
 document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => btn.addEventListener('click', () => startGame(btn.dataset.mode)));
 document.getElementById('view-lb').addEventListener('click', async () => { showScreen('leaderboard'); await refreshLB(); });
 document.getElementById('lb-back').addEventListener('click', () => showScreen('home'));
@@ -1096,27 +1061,23 @@ document.querySelectorAll('#leaderboard .lb-controls button[data-sort]').forEach
 });
 document.getElementById('clear-lb').addEventListener('click', async () => { if (confirm('clear all history?')) { await clearRuns(); await refreshLB(); } });
 document.getElementById('retry-btn').addEventListener('click', () => { if(gameState) startGame(gameState.mode); });
-document.getElementById('home-btn').addEventListener('click', () => showScreen('home'));
+document.getElementById('home-btn').addEventListener('click', () => { if (gameState) { gameState.isFinished=true; } showScreen('home'); });
 document.getElementById('lb-btn').addEventListener('click', async () => { showScreen('leaderboard'); await refreshLB(); });
 document.getElementById('game-screen').addEventListener('click', e => {
   if (e.target.tagName!=='BUTTON' && e.target.tagName!=='CANVAS') document.getElementById('game-canvas').focus();
 });
 
-// ── Init ──
 async function init() {
   const s = await loadSettings();
-  if (s.theme) applyTheme(s.theme);
-  else applyTheme('adept');
-  if (s.fontPair!=null) applyFontPair(s.fontPair);
-  else applyFontPair(0);
-  if (s.caretStyle) applyCaretStyle(s.caretStyle);
-  else applyCaretStyle('block');
-  if (s.soundPack!=null) applySoundPack(s.soundPack);
-  else applySoundPack(-1);
+  if (s.theme) applyTheme(s.theme); else applyTheme('paper');
+  if (s.fontPair!=null) applyFontPair(s.fontPair); else applyFontPair(0);
+  if (s.caretStyle) applyCaretStyle(s.caretStyle); else applyCaretStyle('block');
+  if (s.soundPack!=null) applySoundPack(s.soundPack); else applySoundPack(-1);
   if (s.accent) applyCustomColor('accent', s.accent);
   if (s.correct) applyCustomColor('correct', s.correct);
   if (s.error) applyCustomColor('error', s.error);
   settingsLoaded = true;
+  document.getElementById('nav-bar').style.display = 'none';
   showScreen('home');
 }
 init();
