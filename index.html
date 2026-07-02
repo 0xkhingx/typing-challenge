@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 <style>
 :root {
   --bg: #FAFAF8; --surface: #F1F0EC; --ink: #2A2926; --ink-muted: #8A8880;
@@ -196,13 +197,15 @@ body{
   #settings-drawer{width:100vw;max-width:100vw}
   #game-stats{font-size:.7rem;gap:8px}
 }
+[data-feather]{width:1em;height:1em;vertical-align:middle;margin-right:3px;stroke-width:1.8}
+#settings-trigger [data-feather]{margin-right:0}
 </style>
 </head>
 <body>
 
 <nav id="nav-bar">
-  <button class="nav-btn home-link" id="nav-home" title="home">⌨ adept</button>
-  <button class="nav-btn" id="nav-lb" title="leaderboard">leaderboard</button>
+  <button class="nav-btn home-link" id="nav-home" title="home"><span data-feather="home"></span>⌨ adept</button>
+  <button class="nav-btn" id="nav-lb" title="leaderboard"><span data-feather="award"></span>leaderboard</button>
 </nav>
 
 <div id="home" class="screen">
@@ -246,9 +249,9 @@ body{
     </div>
     <div class="sparkline-wrap"><div class="slabel">wpm over time</div><canvas id="sparkline"></canvas></div>
     <div class="result-actions">
-      <button id="retry-btn">retry</button>
-      <button id="home-btn">home</button>
-      <button id="lb-btn" class="primary">leaderboard</button>
+      <button id="retry-btn"><span data-feather="refresh-cw"></span>retry</button>
+      <button id="home-btn"><span data-feather="home"></span>home</button>
+      <button id="lb-btn" class="primary"><span data-feather="bar-chart-2"></span>leaderboard</button>
     </div>
   </div>
 </div>
@@ -259,7 +262,7 @@ body{
     <button class="active" data-sort="wpm">wpm</button>
     <button data-sort="acc">accuracy</button>
     <button data-sort="date">recent</button>
-    <button id="lb-back">← back</button>
+    <button id="lb-back"><span data-feather="arrow-left"></span>back</button>
   </div>
   <table class="lb-table">
     <thead><tr><th>#</th><th>wpm</th><th>acc</th><th>mode</th><th>date</th></tr></thead>
@@ -269,12 +272,12 @@ body{
   <button class="clear-btn hidden" id="clear-lb">clear all history</button>
 </div>
 
-<button id="settings-trigger" title="settings (⌘K)">⚙</button>
+<button id="settings-trigger" title="settings (⌘K)"><span data-feather="settings"></span></button>
 <div id="app-footer">— · —</div>
 
 <div id="settings-overlay"></div>
 <div id="settings-drawer">
-  <button class="close-btn" id="settings-close">✕</button>
+  <button class="close-btn" id="settings-close"><span data-feather="x"></span></button>
   <h3>settings</h3>
   <div class="setting-group"><div class="sglabel">theme</div>
     <div class="theme-presets">
@@ -1068,6 +1071,7 @@ document.getElementById('game-screen').addEventListener('click', e => {
 });
 
 async function init() {
+  feather.replace();
   const s = await loadSettings();
   if (s.theme) applyTheme(s.theme); else applyTheme('paper');
   if (s.fontPair!=null) applyFontPair(s.fontPair); else applyFontPair(0);
